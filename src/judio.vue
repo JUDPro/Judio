@@ -4,6 +4,8 @@
     :class="{ judio: active }"
     @mouseenter="hover"
     @mouseleave="hover"
+    @mouseup="isMove = false"
+    @mousemove="mouseMove"
   >
     <video
       class="video"
@@ -25,11 +27,16 @@
       <div
         class="video-track"
         ref="videoTrack"
-        @mousedown="clickOnTrack" 
+        @mousedown="clickOnTrack"
         @mouseout="mouseOverElem = false"
         @mouseenter="mouseOverElem = true"
-      ><!--где будет опущена клавиша мыши, от туда и будет проигрываться видос-->
-        <div class="time-line" :class="{ ':after': mouseOverElem }" :style="{ width: widthTimeLine }"></div>
+      >
+        <!--где будет опущена клавиша мыши, от туда и будет проигрываться видос-->
+        <div
+          class="time-line"
+          :class="{ ':after': mouseOverElem }"
+          :style="{ width: widthTimeLine }"
+        ></div>
       </div>
       <span class="dial">00:00/00:00</span>
     </div>
@@ -47,6 +54,7 @@ export default {
     mouseOverElem: false,
     posX: null,
     time: null,
+    isMove: false,
   }),
   props: {
     url: {
@@ -88,16 +96,26 @@ export default {
       this.currentTimeOfVideo = this.videoElement.currentTime;
     },
     clickOnTrack(e) {
-      this.posX = e.offsetX; //берем координату по X, над которой была нажата ЛКМ... // НИКОГДА! НИ-КО-ГДА!!! НЕ ИСПОЛЬЗУЙ clientX
-      this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
-      this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
-      this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
+      if (e.which != 1) {
+        return null;
+      }
+      this.isMove = !this.isMove
+      // this.posX = e.offsetX; //берем координату по X, над которой была нажата ЛКМ... // НИКОГДА! НИ-КО-ГДА!!! НЕ ИСПОЛЬЗУЙ clientX
+      // this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
+      // this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
+      // this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
     },
-    mouseUp() {
-      this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
-      this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
-      // this.videoElement.currentTime = (time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
-      this.returnPosX
+    mouseMove(e) {
+      if (this.isMove) {
+        this.posX = e.offsetX;
+        console.log(this.$refs.videoTrack)
+        this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
+        this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
+        // this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
+        this.videoElement.currentTime =
+          (this.time * this.videoElement.duration) / 100;
+        // this.returnPosX
+      }
     },
     pause() {
       this.videoElement.pause();
@@ -114,7 +132,7 @@ export default {
     },
     returnPosX() {
       // this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100;
-    }
+    },
   },
   mounted() {},
 };
