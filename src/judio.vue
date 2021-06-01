@@ -2,8 +2,8 @@
   <div
     id="judio"
     :class="{ judio: active }"
-    @mouseenter="hover()"
-    @mouseleave="hover()"
+    @mouseenter="hover"
+    @mouseleave="hover"
   >
     <video
       class="video"
@@ -12,7 +12,6 @@
       @playing="updatePaused"
       @pause="updatePaused"
     ></video>
-
     <div :class="{ dimming: active }" @click="play_pause"></div>
     <div class="btn-play-paused" v-show="active">
       <span v-show="paused" class="material-icons btn-play" @click="play"
@@ -26,15 +25,13 @@
       <div
         class="video-track"
         ref="videoTrack"
-        @click="clickOnTrack"
+        @mousedown="clickOnTrack" 
         @mouseout="mouseOverElem = false"
         @mouseenter="mouseOverElem = true"
-      >
-        <div class="time-line" :style="{ width: widthTimeLine }" ref="timeLine">
-          <span class="active"></span>
-        </div>
+      ><!--где будет опущена клавиша мыши, от туда и будет проигрываться видос-->
+        <div class="time-line" :class="{ ':after': mouseOverElem }" :style="{ width: widthTimeLine }"></div>
       </div>
-      <span>{{new Date(videoElement.currentTime).getMinutes()}}</span>/<span>00:00</span>
+      <span class="dial">00:00/00:00</span>
     </div>
   </div>
 </template>
@@ -48,17 +45,20 @@ export default {
     videoPlay: null,
     widthTimeLine: "",
     mouseOverElem: false,
+    posX: null,
+    time: null,
   }),
   props: {
     url: {
       type: String,
       default:
-        "https://firebasestorage.googleapis.com/v0/b/judio-10aa1.appspot.com/o/videos%2F〓コミュニケーションCommunication〓【MMD】【77】.mp4?alt=media&token=e465a738-88ec-4064-8c73-19c666934472",
+        "https://firebasestorage.googleapis.com/v0/b/judio-10aa1.appspot.com/o/videos%2F16201271506042.webm?alt=media&token=60672d27-282e-49b6-b4b6-466b33d52934",
     },
   },
   methods: {
     updatePaused(e) {
       this.videoElement = e.target;
+
       this.paused = e.target.paused;
       console.log();
     },
@@ -75,12 +75,29 @@ export default {
         let videoLenght = Math.round(this.videoElement.duration);
         this.widthTimeLine = (videoTime * 100) / videoLenght + "%";
       });
+      let time = new Date(this.videoElement.duration);
+      this.durationOfVideo = [
+        time.getHours(),
+        time.getMinutes(),
+        time.getSeconds(),
+      ]
+        .map((x) => {
+          return x < 10 ? "0" + x : x;
+        })
+        .join(":");
+      this.currentTimeOfVideo = this.videoElement.currentTime;
     },
     clickOnTrack(e) {
-      let X = e.offsetX; //берем координату по X, над которой была нажата ЛКМ... // НИКОГДА! НИ-КО-ГДА!!! НЕ ИСПОЛЬЗУЙ clientX
-      let time = (X * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
-      this.widthTimeLine = time + "%"; // Выравниваем стили ориентируясь на наш процент
-      this.videoElement.currentTime = (time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
+      this.posX = e.offsetX; //берем координату по X, над которой была нажата ЛКМ... // НИКОГДА! НИ-КО-ГДА!!! НЕ ИСПОЛЬЗУЙ clientX
+      this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
+      this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
+      this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
+    },
+    mouseUp() {
+      this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
+      this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
+      // this.videoElement.currentTime = (time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
+      this.returnPosX
     },
     pause() {
       this.videoElement.pause();
@@ -95,6 +112,9 @@ export default {
     playing() {
       return !this.paused;
     },
+    returnPosX() {
+      // this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100;
+    }
   },
   mounted() {},
 };
@@ -202,12 +222,16 @@ export default {
   bottom: 0;
   background-color: blueviolet;
 }
-.active {
+/* .time-line:after {
+  content: "";
   position: absolute;
   width: 5px;
   height: 5px;
   right: -3px;
   border-radius: 50%;
   background-color: hotpink;
+} */
+.dial {
+  color: aquamarine;
 }
 </style>
