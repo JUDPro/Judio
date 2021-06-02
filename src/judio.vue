@@ -4,8 +4,6 @@
     :class="{ judio: active }"
     @mouseenter="hover"
     @mouseleave="hover"
-    @mouseup="isMove = false"
-    @mousemove="mouseMove"
   >
     <video
       class="video"
@@ -27,13 +25,11 @@
       <div
         class="video-track"
         ref="videoTrack"
-        @click="mouseMove"
-        @mousedown="clickOnTrack"
-        @mouseenter="mouseOverElem = true"
-        @mouseout="mouseOverElem = false"
+        @click="moveToHere"
       >
-        <!--где будет опущена клавиша мыши, от туда и будет проигрываться видос-->
+        <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
         <div class="time-line" :style="{ width: widthTimeLine }"></div>
+        <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
       </div>
       <div class="btn-panel">
         <span class="dial">00:00/00:00</span>
@@ -50,16 +46,14 @@ export default {
     active: false,
     videoPlay: null,
     widthTimeLine: "",
-    mouseOverElem: false,
     posX: null,
     time: null,
-    isMove: false,
   }),
   props: {
     url: {
       type: String,
       default:
-        "https://firebasestorage.googleapis.com/v0/b/judio-10aa1.appspot.com/o/videos%2F16201271506042.webm?alt=media&token=60672d27-282e-49b6-b4b6-466b33d52934",
+        "https://firebasestorage.googleapis.com/v0/b/judio-10aa1.appspot.com/o/videos%2F16222774131560.webm?alt=media&token=488385bc-e4e4-447e-bd31-e1f789d045f8",
     },
   },
   methods: {
@@ -76,61 +70,34 @@ export default {
     },
     play() {
       this.videoElement.play();
-      this.condition = false;
-      this.videoPlay = setInterval(() => {
-        let videoTime = this.videoElement.currentTime;
-        let videoLenght = Math.round(this.videoElement.duration);
-        this.widthTimeLine = (videoTime * 100) / videoLenght + "%";
-      });
-      let time = new Date(this.videoElement.duration);
-      this.durationOfVideo = [
-        time.getHours(),
-        time.getMinutes(),
-        time.getSeconds(),
-      ]
-        .map((x) => {
-          return x < 10 ? "0" + x : x;
-        })
-        .join(":");
-      this.currentTimeOfVideo = this.videoElement.currentTime;
     },
-    clickOnTrack(e) {
-      if (e.which != 1) {
-        return null;
-      }
-      this.isMove = !this.isMove;
+    //-------------------- Переход к некоторому времени по клику -------------------- //
+    moveToHere(e) {
+      if (e.which != 1) return null;
+      if (window.innerWidth > 420) {
+        this.posX = e.clientX - (window.innerWidth / 100) * 10;
+      } else this.posX = e.clientX;
+      this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth;
+      this.widthTimeLine = this.time + "%";
+      this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100;
     },
-    mouseMove(e) {
-      if (this.paused == false) {
-        return null;
-      }
-      if (this.isMove) {
-        if (window.innerWidth > 420) {
-          this.posX = e.clientX - (window.innerWidth / 100) * 10;
-        } else this.posX = e.clientX;
-        this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
-        this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
-        // this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
-        this.videoElement.currentTime =
-          (this.time * this.videoElement.duration) / 100;
-        // this.returnPosX
-      }
+    //-------------------- Переход к некоторому времени по клику -------------------- //
+    dragAndDropHere(e) {
+      this.moveToHere(e);
     },
     pause() {
       this.videoElement.pause();
-      this.condition = true;
       clearInterval(this.videoPlay);
     },
+    //-------------------- Метод, который умрет -------------------- //
     hover() {
       this.active = !this.active;
     },
+    //-------------------- Метод, который умрет -------------------- //
   },
   computed: {
     playing() {
       return !this.paused;
-    },
-    returnPosX() {
-      // this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100;
     },
   },
   mounted() {},
