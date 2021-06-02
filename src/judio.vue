@@ -27,18 +27,17 @@
       <div
         class="video-track"
         ref="videoTrack"
+        @click="mouseMove"
         @mousedown="clickOnTrack"
-        @mouseout="mouseOverElem = false"
         @mouseenter="mouseOverElem = true"
+        @mouseout="mouseOverElem = false"
       >
         <!--где будет опущена клавиша мыши, от туда и будет проигрываться видос-->
-        <div
-          class="time-line"
-          :class="{ ':after': mouseOverElem }"
-          :style="{ width: widthTimeLine }"
-        ></div>
+        <div class="time-line" :style="{ width: widthTimeLine }"></div>
       </div>
-      <span class="dial">00:00/00:00</span>
+      <div class="btn-panel">
+        <span class="dial">00:00/00:00</span>
+      </div>
     </div>
   </div>
 </template>
@@ -99,16 +98,16 @@ export default {
       if (e.which != 1) {
         return null;
       }
-      this.isMove = !this.isMove
-      // this.posX = e.offsetX; //берем координату по X, над которой была нажата ЛКМ... // НИКОГДА! НИ-КО-ГДА!!! НЕ ИСПОЛЬЗУЙ clientX
-      // this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
-      // this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
-      // this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
+      this.isMove = !this.isMove;
     },
     mouseMove(e) {
+      if (this.paused == false) {
+        return null;
+      }
       if (this.isMove) {
-        this.posX = e.offsetX;
-        console.log(this.$refs.videoTrack)
+        if (window.innerWidth > 420) {
+          this.posX = e.clientX - (window.innerWidth / 100) * 10;
+        } else this.posX = e.clientX;
         this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth; // процент нашего Х
         this.widthTimeLine = this.time + "%"; // Выравниваем стили ориентируясь на наш процент
         // this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100; // перематываем видос в место, где мы нажали
@@ -217,28 +216,48 @@ export default {
 .control-panel {
   position: absolute;
   z-index: 20;
-  height: 10%;
+  height: 5em;
   bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.active-zone {
+  position: absolute;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 .video-track {
-  position: relative;
+  position: absolute;
   background-color: rgba(255, 255, 255, 0.3);
   width: 100%;
-  height: 5px;
+  height: 0.3em;
   cursor: pointer;
+  transition-duration: 0.15s;
+  padding: 0.5em 0 0.5em 0;
+  background-clip: content-box;
 }
 .video-track:hover {
-  padding-top: 5px;
+  height: 0.725em;
+  padding: 0.8em 0 0.8em 0;
+  background-clip: content-box;
 }
 .time-line {
-  position: absolute;
+  position: relative;
   height: 100%;
   width: 0;
-  bottom: 0;
+  top: 0;
   background-color: blueviolet;
+}
+.btn-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: start;
 }
 /* .time-line:after {
   content: "";
