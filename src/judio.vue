@@ -1,9 +1,10 @@
 <template>
   <div
     id="judio"
-    :class="{ judio: active }"
-    @mouseenter="hover"
-    @mouseleave="hover"
+    :class="{ judio: video.active }"
+    @mouseenter="video.active = true"
+    @mouseleave="video.active = false"
+    @keydown="pause"
   >
     <video
       class="video"
@@ -12,9 +13,9 @@
       @playing="updatePaused"
       @pause="updatePaused"
     ></video>
-    <div :class="{ dimming: active }" @click="play_pause"></div>
-    <div class="btn-play-paused" v-show="active">
-      <span v-show="paused" class="material-icons btn-play" @click="play"
+    <div :class="{ dimming: video.active }" @click="play_pause"></div>
+    <div class="btn-play-paused" v-show="video.active">
+      <span v-show="video.paused" class="material-icons btn-play" @click="play"
         >play_arrow
       </span>
       <span v-show="playing" class="material-icons btn-pause" @click="pause"
@@ -22,13 +23,9 @@
       </span>
     </div>
     <div class="control-panel">
-      <div
-        class="video-track"
-        ref="videoTrack"
-        @click="moveToHere"
-      >
+      <div class="video-track" ref="videoTrack" @click="moveToHere">
         <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
-        <div class="time-line" :style="{ width: widthTimeLine }"></div>
+        <div class="time-line" :style="{ width: video.widthTimeLine }"></div>
         <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
       </div>
       <div class="btn-panel">
@@ -41,13 +38,16 @@
 <script>
 export default {
   data: () => ({
-    videoElement: null,
-    paused: null,
-    active: false,
-    videoPlay: null,
-    widthTimeLine: "",
-    posX: null,
-    time: null,
+    video: {
+      videoElement: null,
+      paused: null,
+      active: false,
+      videoPlay: null,
+      widthTimeLine: "",
+      posX: null,
+      time: null,
+      skip: 5,
+    },
   }),
   props: {
     url: {
@@ -58,49 +58,75 @@ export default {
   },
   methods: {
     updatePaused(e) {
-      this.videoElement = e.target;
-
-      this.paused = e.target.paused;
-      console.log();
+      this.video.videoElement = e.target;
+      this.video.paused = e.target.paused;
     },
     play_pause() {
-      if (this.paused) {
+      if (this.video.paused) {
         this.play();
       } else this.pause();
     },
     play() {
-      this.videoElement.play();
+      this.video.videoElement.play();
+      this.video.videoPlay = setInterval(() => {
+        let videoTime = this.video.videoElement.currentTime;
+        let videoLenght = Math.round(this.video.videoElement.duration);
+        this.video.widthTimeLine = (videoTime * 100) / videoLenght + "%";
+      });
+    },
+    pause() {
+      this.video.videoElement.pause();
+      clearInterval(this.videoPlay);
     },
     //-------------------- Переход к некоторому времени по клику -------------------- //
     moveToHere(e) {
       if (e.which != 1) return null;
       if (window.innerWidth > 420) {
-        this.posX = e.clientX - (window.innerWidth / 100) * 10;
-      } else this.posX = e.clientX;
-      this.time = (this.posX * 100) / this.$refs.videoTrack.offsetWidth;
-      this.widthTimeLine = this.time + "%";
-      this.videoElement.currentTime = (this.time * this.videoElement.duration) / 100;
+        this.video.posX = e.clientX - (window.innerWidth / 100) * 10;
+      } else this.video.posX = e.clientX;
+      this.video.time =
+        (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
+      this.video.widthTimeLine = this.video.time + "%";
+      this.video.videoElement.currentTime =
+        (this.video.time * this.video.videoElement.duration) / 100;
     },
     //-------------------- Переход к некоторому времени по клику -------------------- //
+    skip() {
+      this.video.videoElement.currentTime += this.video.skip;
+    },
+    back() {
+      this.video.videoElement.currentTime -= this.video.skip;
+    },
     dragAndDropHere(e) {
       this.moveToHere(e);
     },
-    pause() {
-      this.videoElement.pause();
-      clearInterval(this.videoPlay);
-    },
-    //-------------------- Метод, который умрет -------------------- //
-    hover() {
-      this.active = !this.active;
-    },
-    //-------------------- Метод, который умрет -------------------- //
   },
   computed: {
     playing() {
-      return !this.paused;
+      return !this.video.paused;
     },
   },
-  mounted() {},
+  mounted() {
+    document.addEventListener("keydown", (e) => {
+      // console.log(e.code)
+      switch (e.code) {
+        case "Space": {
+          this.play_pause();
+          break;
+        }
+        case "ArrowRight": {
+          this.skip();
+          break;
+        }
+        case "ArrowLeft": {
+          this.back();
+          break;
+        }
+        default:
+          return null;
+      }
+    });
+  },
 };
 </script>
 
@@ -226,15 +252,6 @@ export default {
   display: flex;
   justify-content: start;
 }
-/* .time-line:after {
-  content: "";
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  right: -3px;
-  border-radius: 50%;
-  background-color: hotpink;
-} */
 .dial {
   color: aquamarine;
 }
