@@ -5,6 +5,8 @@
     @mouseenter="video.active = true"
     @mouseleave="video.active = false"
     @keydown="pause"
+    @mousemove="dragAndDropHere"
+    @mouseup="forDropped"
   >
     <video
       class="video"
@@ -23,7 +25,12 @@
       </span>
     </div>
     <div class="control-panel">
-      <div class="video-track" ref="videoTrack" @click="moveToHere">
+      <div
+        class="video-track"
+        ref="videoTrack"
+        @click="moveToHere"
+        @mousedown="video.dropped = true"
+      >
         <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
         <div class="time-line" :style="{ width: video.widthTimeLine }"></div>
         <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
@@ -47,6 +54,7 @@ export default {
       posX: null,
       time: null,
       skip: 5,
+      dropped: false, // Когда нажата лкм над баром, но не отпущена, эта переменная меняет своё значение на true
     },
   }),
   props: {
@@ -97,8 +105,24 @@ export default {
     back() {
       this.video.videoElement.currentTime -= this.video.skip;
     },
+    // т.к. событие находится на блоке #judio, то событие мыши срабатывает все время
+    // (это нужно, чтобы юзер мог двигать свободно курсором по экрану),
+    // поэтому добавил переменную,
+    // состояние которой меняется по клику на бар (dropped, при этом клавиша не поднята).
+    // Когда лкм была поднята, состояние переменной dropped меняется на false,
+    // поэтому событие ниже не срабатывает, однако это событие вызывается, когда курсор движется по экрану,
+    // что не есть хорошо 〜(￣▽￣〜)
+    // В общем, потом надо замять эту штуку...
     dragAndDropHere(e) {
-      this.moveToHere(e);
+      if (this.video.dropped == true) {
+        this.pause();
+        this.moveToHere(e);
+      }
+    },
+    // а вот еще один бесполезный метод, который я убью
+    forDropped() {
+      this.video.dropped = false;
+      this.play();
     },
   },
   computed: {
