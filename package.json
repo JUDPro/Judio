@@ -6,7 +6,8 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && webpack --mode production",
-    "serve": "webpack serve --mode development"
+    "serve": "webpack serve --mode development",
+    "dev": "webpack serve --host 192.168.0.103"
   },
   "author": "JUDPro",
   "license": "ISC",

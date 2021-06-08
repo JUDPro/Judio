@@ -8,11 +8,12 @@
   >
     <video
       class="video"
-      :src="url"
       @canplay="updatePaused"
       @playing="updatePaused"
       @pause="updatePaused"
-    ></video>
+    >
+      <source :src="url" />
+    </video>
     <div :class="{ dimming: video.active }" @click="play_pause"></div>
     <div class="btn-play-paused" v-show="video.active">
       <span v-show="video.paused" class="material-icons btn-play" @click="play"
@@ -27,16 +28,20 @@
         class="video-track"
         ref="videoTrack"
         @click="moveToHere"
-        @mousemove="relocate"
+        @touchmove="moveToHere"
+        @mousemove="moveToHere"
       >
-        <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
+        <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
         <div class="time-line" :style="{ width: video.widthTimeLine }">
           <span class="pull"></span>
         </div>
-        <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
+        <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
       </div>
       <div class="btn-panel">
-        <div class="dial">{{ video.seconds }}/{{ video.fullTime }}</div>
+        <div class="dial">
+          {{ video.currentMinutes }}:{{ video.currentSecond }}/
+          {{ video.minutes }}:{{ video.seconds }}
+        </div>
         <div class="settings"></div>
       </div>
     </div>
@@ -47,40 +52,62 @@
 export default {
   data: () => ({
     video: {
-      videoElement: null,
-      paused: null,
-      active: false,
-      videoPlay: null,
-      widthTimeLine: "",
-      posX: null,
-      time: null,
-      skip: 5,
-      seconds: 0,
-      fullTime: 0,
+      videoElement: null, // сам элемент с видео
+      paused: null, // состояние паузы (true/false)
+      active: false, // переменная для добавления н-х стилей
+      videoPlay: null, // нужна для правильной работы функций play() / pause()
+      widthTimeLine: "", // нужна для стилей
+      posX: null, // нужна для расчета позиции нажатия мыши
+      time: null, // вспомогательная переменная для расчета
+      skip: 5, // переменная для перемотки видео
+      currentSecond: "00", // секунда в данный момент
+      currentMinutes: 0, // минута в данный момент (высчитывается из секунд)
+      seconds: 0, // общее количество секунд
+      minutes: 0, // общее количество минут (высчитывается из секунд)
     },
   }),
   props: {
     url: {
       type: String,
       default:
-        "https://firebasestorage.googleapis.com/v0/b/judio-10aa1.appspot.com/o/videos%2F16222774131560.webm?alt=media&token=488385bc-e4e4-447e-bd31-e1f789d045f8",
+        "https://firebasestorage.googleapis.com/v0/b/judio-10aa1.appspot.com/o/videos%2F16228390094780.webm?alt=media&token=d7a4de24-47f5-40e7-a8be-3252e741ab29",
     },
   },
   methods: {
+    //-------------------- Метод для инициализации некоторых значений --------------------//
     updatePaused(e) {
       this.video.videoElement = e.target;
       this.video.paused = e.target.paused;
-      this.video.fullTime =  Math.round(this.video.videoElement.duration);
+      this.video.seconds =
+        this.video.second < 10
+          ? "0" + Math.round(this.video.videoElement.duration % 60)
+          : Math.round(this.video.videoElement.duration % 60);
+      this.video.minutes = Math.round(
+        (this.video.videoElement.duration - this.video.seconds) / 60
+      );
     },
+    //-------------------- Метод для инициализации некоторых значений --------------------//
+
+    //-------------------- Этот метод не будет жить, наверное --------------------//
     play_pause() {
       if (this.video.paused) {
         this.play();
       } else this.pause();
     },
+    //-------------------- Этот метод не будет жить, наверное --------------------//
+
+    //-------------------- Методы для проигрывания и паузы  --------------------//
     play() {
       this.video.videoElement.play();
       this.video.videoPlay = setInterval(() => {
-        this.video.seconds = Math.round(this.video.videoElement.currentTime);
+        // пришел сОдОмИт и оставил здесь этот код
+        this.video.currentSecond =
+          this.video.currentSecond < 10
+            ? "0" + (Math.round(this.video.videoElement.currentTime) % 60)
+            : Math.round(this.video.videoElement.currentTime) % 60;
+        this.video.currentMinutes = Math.round(
+          (this.video.videoElement.currentTime - this.video.currentSecond) / 60
+        );
         let videoTime = this.video.videoElement.currentTime;
         let videoLenght = Math.round(this.video.videoElement.duration);
         this.video.widthTimeLine = (videoTime * 100) / videoLenght + "%";
@@ -91,48 +118,60 @@ export default {
       this.video.videoElement.pause();
       clearInterval(this.videoPlay);
     },
+    //-------------------- Методы для проигрывания и паузы --------------------//
+
     //-------------------- Переход к некоторому времени по клику --------------------//
     moveToHere(e) {
-      if (e.which != 1) return null;
-      else {
-        if (window.innerWidth > 420) {
+      if (window.innerWidth >= 420) {
+        if (e.which != 1) return null;
+        else {
           this.video.posX =
             e.clientX - (this.$refs.widthParent.clientWidth / 100) * 10;
-        } else this.video.posX = e.clientX;
+          this.video.time =
+            (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
+          this.video.widthTimeLine = this.video.time + "%";
+          this.video.videoElement.currentTime =
+            (this.video.time * this.video.videoElement.duration) / 100;
+        }
+      } else {
+        this.video.posX = e.changedTouches[0].clientX;
         this.video.time =
           (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
         this.video.widthTimeLine = this.video.time + "%";
-        this.video.videoElement.currentTime =
-          (this.video.time * this.video.videoElement.duration) / 100;
+        this.video.videoElement.currentTime = (this.video.time * this.video.videoElement.duration) / 100;
       }
     },
-    relocate(e) {
-      this.moveToHere(e);
-    },
     //-------------------- Переход к некоторому времени по клику --------------------//
+
+    //-------------------- Методы для скипа видео на 5 секунд --------------------//
     skip() {
       this.video.videoElement.currentTime += this.video.skip;
     },
     back() {
       this.video.videoElement.currentTime -= this.video.skip;
     },
+    //-------------------- Методы для скипа видео на 5 секунд --------------------//
   },
   computed: {
     playing() {
-      return !this.video.paused;
+      return !this.video.paused; // меняем состояние паузы
     },
   },
   mounted() {
+    // назначаю горячие клавиши
     document.addEventListener("keydown", (e) => {
       switch (e.code) {
+        // пауза на пробел
         case "Space": {
           this.play_pause();
           break;
         }
+        // скип на пять секунд вперед, по нажатию на правую стрелку
         case "ArrowRight": {
           this.skip();
           break;
         }
+        // скип на пять секунд назад, по нажатию на левую стрелку
         case "ArrowLeft": {
           this.back();
           break;
@@ -147,8 +186,9 @@ export default {
 
 <style scoped>
 .test {
-  width: 600px;
-  height: 350px;
+  width: 60px;
+  height: 35px;
+  background: aquamarine;
 }
 @media screen and (max-width: 420px) {
   .control-panel {
@@ -180,7 +220,7 @@ export default {
   cursor: pointer;
 }
 #judio {
-  font-family:'Segoe UI';
+  font-family: "Segoe UI";
   position: relative;
   background-color: #000;
   display: flex;
