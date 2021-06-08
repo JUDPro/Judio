@@ -4,9 +4,7 @@
     :class="{ judio: video.active }"
     @mouseenter="video.active = true"
     @mouseleave="video.active = false"
-    @keydown="pause"
-    @mousemove="dragAndDropHere"
-    @mouseup="forDropped"
+    ref="widthParent"
   >
     <video
       class="video"
@@ -29,14 +27,17 @@
         class="video-track"
         ref="videoTrack"
         @click="moveToHere"
-        @mousedown="video.dropped = true"
+        @mousemove="relocate"
       >
         <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
-        <div class="time-line" :style="{ width: video.widthTimeLine }"></div>
+        <div class="time-line" :style="{ width: video.widthTimeLine }">
+          <span class="pull"></span>
+        </div>
         <!--------------------где будет опущена клавиша мыши, от туда и будет проигрываться видос-------------------->
       </div>
       <div class="btn-panel">
-        <span class="dial">00:00/00:00</span>
+        <div class="dial">{{ video.seconds }}/{{ video.fullTime }}</div>
+        <div class="settings"></div>
       </div>
     </div>
   </div>
@@ -54,7 +55,8 @@ export default {
       posX: null,
       time: null,
       skip: 5,
-      dropped: false, // Когда нажата лкм над баром, но не отпущена, эта переменная меняет своё значение на true
+      seconds: 0,
+      fullTime: 0,
     },
   }),
   props: {
@@ -68,6 +70,7 @@ export default {
     updatePaused(e) {
       this.video.videoElement = e.target;
       this.video.paused = e.target.paused;
+      this.video.fullTime =  Math.round(this.video.videoElement.duration);
     },
     play_pause() {
       if (this.video.paused) {
@@ -77,52 +80,41 @@ export default {
     play() {
       this.video.videoElement.play();
       this.video.videoPlay = setInterval(() => {
+        this.video.seconds = Math.round(this.video.videoElement.currentTime);
         let videoTime = this.video.videoElement.currentTime;
         let videoLenght = Math.round(this.video.videoElement.duration);
         this.video.widthTimeLine = (videoTime * 100) / videoLenght + "%";
       });
     },
     pause() {
+      this.video.statePause = this.video.paused;
       this.video.videoElement.pause();
       clearInterval(this.videoPlay);
     },
-    //-------------------- Переход к некоторому времени по клику -------------------- //
+    //-------------------- Переход к некоторому времени по клику --------------------//
     moveToHere(e) {
       if (e.which != 1) return null;
-      if (window.innerWidth > 420) {
-        this.video.posX = e.clientX - (window.innerWidth / 100) * 10;
-      } else this.video.posX = e.clientX;
-      this.video.time =
-        (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
-      this.video.widthTimeLine = this.video.time + "%";
-      this.video.videoElement.currentTime =
-        (this.video.time * this.video.videoElement.duration) / 100;
+      else {
+        if (window.innerWidth > 420) {
+          this.video.posX =
+            e.clientX - (this.$refs.widthParent.clientWidth / 100) * 10;
+        } else this.video.posX = e.clientX;
+        this.video.time =
+          (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
+        this.video.widthTimeLine = this.video.time + "%";
+        this.video.videoElement.currentTime =
+          (this.video.time * this.video.videoElement.duration) / 100;
+      }
     },
-    //-------------------- Переход к некоторому времени по клику -------------------- //
+    relocate(e) {
+      this.moveToHere(e);
+    },
+    //-------------------- Переход к некоторому времени по клику --------------------//
     skip() {
       this.video.videoElement.currentTime += this.video.skip;
     },
     back() {
       this.video.videoElement.currentTime -= this.video.skip;
-    },
-    // т.к. событие находится на блоке #judio, то событие мыши срабатывает все время
-    // (это нужно, чтобы юзер мог двигать свободно курсором по экрану),
-    // поэтому добавил переменную,
-    // состояние которой меняется по клику на бар (dropped, при этом клавиша не поднята).
-    // Когда лкм была поднята, состояние переменной dropped меняется на false,
-    // поэтому событие ниже не срабатывает, однако это событие вызывается, когда курсор движется по экрану,
-    // что не есть хорошо 〜(￣▽￣〜)
-    // В общем, потом надо замять эту штуку...
-    dragAndDropHere(e) {
-      if (this.video.dropped == true) {
-        this.pause();
-        this.moveToHere(e);
-      }
-    },
-    // а вот еще один бесполезный метод, который я убью
-    forDropped() {
-      this.video.dropped = false;
-      this.play();
     },
   },
   computed: {
@@ -132,7 +124,6 @@ export default {
   },
   mounted() {
     document.addEventListener("keydown", (e) => {
-      // console.log(e.code)
       switch (e.code) {
         case "Space": {
           this.play_pause();
@@ -155,6 +146,10 @@ export default {
 </script>
 
 <style scoped>
+.test {
+  width: 600px;
+  height: 350px;
+}
 @media screen and (max-width: 420px) {
   .control-panel {
     width: 100%;
@@ -185,6 +180,7 @@ export default {
   cursor: pointer;
 }
 #judio {
+  font-family:'Segoe UI';
   position: relative;
   background-color: #000;
   display: flex;
@@ -269,14 +265,27 @@ export default {
   width: 0;
   top: 0;
   background-color: blueviolet;
+  overflow: hidden;
+}
+.pull {
+  position: absolute;
+  background: aquamarine;
+  right: 0;
+  height: 100%;
+  width: 0.3em;
 }
 .btn-panel {
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: start;
+  flex-direction: column;
 }
 .dial {
   color: aquamarine;
+  height: 50%;
+}
+.settings {
+  height: 50%;
 }
 </style>
