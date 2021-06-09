@@ -22,7 +22,7 @@ module.exports = {
   devServer: {
     open: true,
     hot: true,
-    host: '192.168.0.103'
+    host: "192.168.0.103",
   },
   plugins: [
     new HtmlWebpackPlugin({

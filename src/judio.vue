@@ -12,7 +12,7 @@
       @playing="updatePaused"
       @pause="updatePaused"
     >
-      <source :src="url" />
+      <source :src="url" type="video/mp4" />
     </video>
     <div :class="{ dimming: video.active }" @click="play_pause"></div>
     <div class="btn-play-paused" v-show="video.active">
@@ -27,9 +27,10 @@
       <div
         class="video-track"
         ref="videoTrack"
-        @click="moveToHere"
-        @touchmove="moveToHere"
-        @mousemove="moveToHere"
+        @click="moveToHerePC"
+        @mousemove="moveToHerePC"
+        @touch="moveToHereMobile"
+        @touchmove="moveToHereMobile"
       >
         <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
         <div class="time-line" :style="{ width: video.widthTimeLine }">
@@ -49,6 +50,8 @@
 </template>
 
 <script>
+import video from "./Test4k.mp4";
+
 export default {
   data: () => ({
     video: {
@@ -69,8 +72,7 @@ export default {
   props: {
     url: {
       type: String,
-      default:
-        "https://firebasestorage.googleapis.com/v0/b/judio-10aa1.appspot.com/o/videos%2F16228390094780.webm?alt=media&token=d7a4de24-47f5-40e7-a8be-3252e741ab29",
+      default: video,
     },
   },
   methods: {
@@ -79,8 +81,8 @@ export default {
       this.video.videoElement = e.target;
       this.video.paused = e.target.paused;
       this.video.seconds =
-        this.video.second < 10
-          ? "0" + Math.round(this.video.videoElement.duration % 60)
+        this.video.seconds < 10
+          ? "0" + (Math.round(this.video.videoElement.duration) % 60)
           : Math.round(this.video.videoElement.duration % 60);
       this.video.minutes = Math.round(
         (this.video.videoElement.duration - this.video.seconds) / 60
@@ -121,24 +123,31 @@ export default {
     //-------------------- Методы для проигрывания и паузы --------------------//
 
     //-------------------- Переход к некоторому времени по клику --------------------//
-    moveToHere(e) {
-      if (window.innerWidth >= 420) {
-        if (e.which != 1) return null;
-        else {
+    // Метод для пк
+    moveToHerePC(e) {
+      if (e.which != 1) return null;
+      else {
+        if (window.innerWidth <= 420) {
+          this.video.posX = e.clientX;
+        } else
           this.video.posX =
             e.clientX - (this.$refs.widthParent.clientWidth / 100) * 10;
-          this.video.time =
-            (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
-          this.video.widthTimeLine = this.video.time + "%";
-          this.video.videoElement.currentTime =
-            (this.video.time * this.video.videoElement.duration) / 100;
-        }
-      } else {
+        this.video.time =
+          (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
+        this.video.widthTimeLine = this.video.time + "%";
+        this.video.videoElement.currentTime =
+          (this.video.time * this.video.videoElement.duration) / 100;
+      }
+    },
+    // Метод для мобилки
+    moveToHereMobile(e) {
+      if (window.innerWidth <= 420) {
         this.video.posX = e.changedTouches[0].clientX;
         this.video.time =
           (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
         this.video.widthTimeLine = this.video.time + "%";
-        this.video.videoElement.currentTime = (this.video.time * this.video.videoElement.duration) / 100;
+        this.video.videoElement.currentTime =
+          (this.video.time * this.video.videoElement.duration) / 100;
       }
     },
     //-------------------- Переход к некоторому времени по клику --------------------//
