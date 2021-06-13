@@ -1,55 +1,51 @@
 <template>
-  <div class="test">
-    <div
-      id="judio"
-      :class="{ judio: video.active }"
-      @mouseenter="video.active = true"
-      @mouseleave="video.active = false"
-      ref="widthParent"
+  <div
+    id="judio"
+    :class="{ judio: video.active }"
+    @mouseenter="video.active = true"
+    @mouseleave="video.active = false"
+    ref="widthParent"
+  >
+    <video
+      class="video"
+      @canplay="updatePaused"
+      @playing="updatePaused"
+      @pause="updatePaused"
     >
-      <video
-        class="video"
-        @canplay="updatePaused"
-        @playing="updatePaused"
-        @pause="updatePaused"
+      <source :src="url" type="video/mp4" />
+      <source :src="url" type="video/webm" />
+    </video>
+    <div :class="{ dimming: video.active }" @click="play_pause"></div>
+    <div class="btn-play-paused" v-show="video.active">
+      <span v-show="video.paused" class="material-icons btn-play" @click="play"
+        >play_arrow
+      </span>
+      <span v-show="playing" class="material-icons btn-pause" @click="pause"
+        >pause
+      </span>
+    </div>
+    <div class="control-panel">
+      <div
+        class="video-track"
+        ref="videoTrack"
+        @click="moveToHerePC"
+        @mousemove="moveToHerePC"
+        @touch="moveToHereMobile"
+        @touchmove="moveToHereMobile"
       >
-        <source :src="url" type="video/mp4" />
-      </video>
-      <div :class="{ dimming: video.active }" @click="play_pause"></div>
-      <div class="btn-play-paused" v-show="video.active">
-        <span
-          v-show="video.paused"
-          class="material-icons btn-play"
-          @click="play"
-          >play_arrow
-        </span>
-        <span v-show="playing" class="material-icons btn-pause" @click="pause"
-          >pause
-        </span>
-      </div>
-      <div class="control-panel">
-        <div
-          class="video-track"
-          ref="videoTrack"
-          @click="moveToHerePC"
-          @mousemove="moveToHerePC"
-          @touch="moveToHereMobile"
-          @touchmove="moveToHereMobile"
-        >
-          <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
-          <div class="time-line" :style="{ width: video.widthTimeLine }">
-            <span class="pull"></span>
-          </div>
-          <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
+        <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
+        <div class="time-line" :style="{ width: video.widthTimeLine }">
+          <span class="pull"></span>
         </div>
-        <div class="btn-panel">
-          <div class="dial">
-            {{ video.currentMinutes }}:{{ video.currentSecond }}/
-            {{ video.minutes }}:{{ video.seconds }}
-          </div>
-          <div class="settings">
-            <div class="t" @click="fullSizeWindow"></div>
-          </div>
+        <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
+      </div>
+      <div class="btn-panel">
+        <div class="dial">
+          {{ video.currentMinutes }}:{{ video.currentSecond }}/
+          {{ video.minutes }}:{{ video.seconds }}
+        </div>
+        <div class="settings">
+          <div class="t" @click="fullSizeWindow"></div>
         </div>
       </div>
     </div>
@@ -57,7 +53,10 @@
 </template>
 
 <script>
-import video from "./video for tests/morjeee.mp4";
+//import video from "./video for tests/1.webm"; // длинный webm
+//import video from "./video for tests/2.webm"; // webm широкий
+//import video from "./video for tests/3.mp4"; // видео 36 секунд
+import video from "./video for tests/4.mp4"; // видео 4к 
 
 export default {
   data: () => ({
@@ -71,7 +70,7 @@ export default {
       time: null, // вспомогательная переменная для расчета
       skip: 5, // переменная для перемотки видео
       currentSecond: "00", // секунда в данный момент
-      currentMinutes: 0, // минута в данный момент (высчитывается из секунд)
+      currentMinutes: "0", // минута в данный момент (высчитывается из секунд)
       seconds: 0, // общее количество секунд
       minutes: 0, // общее количество минут (высчитывается из секунд)
     },
@@ -87,7 +86,7 @@ export default {
     updatePaused(e) {
       this.video.videoElement = e.target;
       this.video.seconds =
-        this.video.seconds < 10
+        (this.video.videoElement.duration % 60) < 10
           ? "0" + (Math.round(this.video.videoElement.duration) % 60)
           : Math.round(this.video.videoElement.duration % 60);
       this.video.minutes = Math.round(
@@ -148,14 +147,17 @@ export default {
     },
     // Метод для мобилки
     moveToHereMobile(e) {
-      if (window.innerWidth <= 420) {
+      if (window.innerWidth <= 420)
         this.video.posX = e.changedTouches[0].clientX;
-        this.video.time =
-          (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
-        this.video.widthTimeLine = this.video.time + "%";
-        this.video.videoElement.currentTime =
-          (this.video.time * this.video.videoElement.duration) / 100;
-      }
+      else
+        this.video.posX =
+          e.changedTouches[0].clientX -
+          (this.$refs.widthParent.clientWidth / 100) * 10;
+      this.video.time =
+        (this.video.posX * 100) / this.$refs.videoTrack.offsetWidth;
+      this.video.widthTimeLine = this.video.time + "%";
+      this.video.videoElement.currentTime =
+        (this.video.time * this.video.videoElement.duration) / 100;
     },
     //-------------------- Переход к некоторому времени по клику --------------------//
 
@@ -204,6 +206,9 @@ export default {
           return null;
       }
     });
+    // document.addEventListener("orientationchange", (e) => {
+    //   console.log(e)
+    // });
   },
 };
 </script>

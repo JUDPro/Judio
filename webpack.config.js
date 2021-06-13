@@ -14,7 +14,7 @@ module.exports = {
         loader: "file-loader",
       },
       {
-        test: /\.mp4$/,
+        test: /\.(mp4|webm)$/,
         use: "file-loader?name=videos/[name].[ext]",
       },
     ],
