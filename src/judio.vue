@@ -1,56 +1,63 @@
 <template>
-  <div
-    id="judio"
-    :class="{ judio: video.active }"
-    @mouseenter="video.active = true"
-    @mouseleave="video.active = false"
-    ref="widthParent"
-  >
-    <video
-      class="video"
-      @canplay="updatePaused"
-      @playing="updatePaused"
-      @pause="updatePaused"
+  <div class="test">
+    <div
+      id="judio"
+      :class="{ judio: video.active }"
+      @mouseenter="video.active = true"
+      @mouseleave="video.active = false"
+      ref="widthParent"
     >
-      <source :src="url" type="video/mp4" />
-    </video>
-    <div :class="{ dimming: video.active }" @click="play_pause"></div>
-    <div class="btn-play-paused" v-show="video.active">
-      <span v-show="video.paused" class="material-icons btn-play" @click="play"
-        >play_arrow
-      </span>
-      <span v-show="playing" class="material-icons btn-pause" @click="pause"
-        >pause
-      </span>
-    </div>
-    <div class="control-panel">
-      <div
-        class="video-track"
-        ref="videoTrack"
-        @click="moveToHerePC"
-        @mousemove="moveToHerePC"
-        @touch="moveToHereMobile"
-        @touchmove="moveToHereMobile"
+      <video
+        class="video"
+        @canplay="updatePaused"
+        @playing="updatePaused"
+        @pause="updatePaused"
       >
-        <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
-        <div class="time-line" :style="{ width: video.widthTimeLine }">
-          <span class="pull"></span>
-        </div>
-        <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
+        <source :src="url" type="video/mp4" />
+      </video>
+      <div :class="{ dimming: video.active }" @click="play_pause"></div>
+      <div class="btn-play-paused" v-show="video.active">
+        <span
+          v-show="video.paused"
+          class="material-icons btn-play"
+          @click="play"
+          >play_arrow
+        </span>
+        <span v-show="playing" class="material-icons btn-pause" @click="pause"
+          >pause
+        </span>
       </div>
-      <div class="btn-panel">
-        <div class="dial">
-          {{ video.currentMinutes }}:{{ video.currentSecond }}/
-          {{ video.minutes }}:{{ video.seconds }}
+      <div class="control-panel">
+        <div
+          class="video-track"
+          ref="videoTrack"
+          @click="moveToHerePC"
+          @mousemove="moveToHerePC"
+          @touch="moveToHereMobile"
+          @touchmove="moveToHereMobile"
+        >
+          <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
+          <div class="time-line" :style="{ width: video.widthTimeLine }">
+            <span class="pull"></span>
+          </div>
+          <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
         </div>
-        <div class="settings"></div>
+        <div class="btn-panel">
+          <div class="dial">
+            {{ video.currentMinutes }}:{{ video.currentSecond }}/
+            {{ video.minutes }}:{{ video.seconds }}
+          </div>
+          <div class="settings">
+            <div class="t" @click="fullSizeWindow"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import video from "./Test4k.mp4";
+import video from "./video for tests/morjeee.mp4";
 
 export default {
   data: () => ({
@@ -79,7 +86,6 @@ export default {
     //-------------------- Метод для инициализации некоторых значений --------------------//
     updatePaused(e) {
       this.video.videoElement = e.target;
-      this.video.paused = e.target.paused;
       this.video.seconds =
         this.video.seconds < 10
           ? "0" + (Math.round(this.video.videoElement.duration) % 60)
@@ -87,6 +93,7 @@ export default {
       this.video.minutes = Math.round(
         (this.video.videoElement.duration - this.video.seconds) / 60
       );
+      this.video.paused = e.target.paused;
     },
     //-------------------- Метод для инициализации некоторых значений --------------------//
 
@@ -160,6 +167,14 @@ export default {
       this.video.videoElement.currentTime -= this.video.skip;
     },
     //-------------------- Методы для скипа видео на 5 секунд --------------------//
+
+    //-------------------- Полноэкранный режим --------------------//
+    fullSizeWindow() {
+      let box = this.$refs.widthParent;
+      if (document.fullscreenElement !== null) document.exitFullscreen();
+      else box.requestFullscreen();
+    },
+    //-------------------- Полноэкранный режим --------------------//
   },
   computed: {
     playing() {
@@ -195,9 +210,14 @@ export default {
 
 <style scoped>
 .test {
-  width: 60px;
-  height: 35px;
-  background: aquamarine;
+  width: 600px;
+  height: 350px;
+}
+.t {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background: blue;
 }
 @media screen and (max-width: 420px) {
   .control-panel {
