@@ -2,7 +2,7 @@
   <div
     id="judio"
     :class="{ judio: video.active }"
-    @mouseenter="video.active = true"
+    @mousemove="userIsNotActive"
     @mouseleave="video.active = false"
     ref="widthParent"
   >
@@ -24,7 +24,7 @@
         >pause
       </span>
     </div>
-    <div class="control-panel">
+    <div :class="{ 'control-panel': video.active }" v-show="video.active">
       <div
         class="video-track"
         ref="videoTrack"
@@ -53,10 +53,10 @@
 </template>
 
 <script>
-//import video from "./video for tests/1.webm"; // длинный webm
+import video from "./video for tests/1.webm"; // длинный webm
 //import video from "./video for tests/2.webm"; // webm широкий
 //import video from "./video for tests/3.mp4"; // видео 36 секунд
-import video from "./video for tests/4.mp4"; // видео 4к 
+//import video from "./video for tests/4.mp4"; // видео 4к
 
 export default {
   data: () => ({
@@ -73,7 +73,10 @@ export default {
       currentMinutes: "0", // минута в данный момент (высчитывается из секунд)
       seconds: 0, // общее количество секунд
       minutes: 0, // общее количество минут (высчитывается из секунд)
+      timer: null,
     },
+    x: null,
+    y: null,
   }),
   props: {
     url: {
@@ -86,7 +89,7 @@ export default {
     updatePaused(e) {
       this.video.videoElement = e.target;
       this.video.seconds =
-        (this.video.videoElement.duration % 60) < 10
+        this.video.videoElement.duration % 60 < 10
           ? "0" + (Math.round(this.video.videoElement.duration) % 60)
           : Math.round(this.video.videoElement.duration % 60);
       this.video.minutes = Math.round(
@@ -127,6 +130,32 @@ export default {
       clearInterval(this.videoPlay);
     },
     //-------------------- Методы для проигрывания и паузы --------------------//
+
+    //-------------------- Скрывает управление через некоторое время --------------------//
+    userIsNotActive(e) {
+      if (this.video.active == false) this.video.active = true; // здесь появляется панель управления при движении мыши
+      // ниже я хочу сравнить координаты мыши. Если они равны в течении 3х секунд, что панель управления нужно скрыть.
+      let X = e.clientX;
+      let Y = e.clientY;
+      if (this.x == null && this.y == null) {
+        this.x = e.clientX;
+        this.y = e.clientY;
+      }
+      // эта функция в целом работает, но не так, как хотелось бы... её нужно переписать. 
+      // условие ниже будет срабатывать всегда, т.к. сравниваются значения из первого ивента,
+      // а мне нужно следить за переменными, то есть нужно следить за их содержимым: если содержимое не меняется в течении
+      // некотрого времени, то this.video.active = false (убираю панель управления). В общем, опять переписывать...
+      this.video.timer = setTimeout(() => {
+        if (this.x == X && this.y == Y) {
+          
+          this.video.active = false;
+          this.x = null;
+          this.y = null;
+        }
+        this.video.timer = null;
+      }, 3000);
+    },
+    //-------------------- Скрывает управление через некоторое время --------------------//
 
     //-------------------- Переход к некоторому времени по клику --------------------//
     // Метод для пк
@@ -172,6 +201,7 @@ export default {
 
     //-------------------- Полноэкранный режим --------------------//
     fullSizeWindow() {
+      //console.log(screen.orientation) нужно реализовать поворот экрана на мобильных устройствах
       let box = this.$refs.widthParent;
       if (document.fullscreenElement !== null) document.exitFullscreen();
       else box.requestFullscreen();
@@ -206,9 +236,6 @@ export default {
           return null;
       }
     });
-    // document.addEventListener("orientationchange", (e) => {
-    //   console.log(e)
-    // });
   },
 };
 </script>
