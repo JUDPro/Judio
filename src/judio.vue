@@ -53,9 +53,9 @@
 </template>
 
 <script>
-import video from "./video for tests/1.webm"; // длинный webm
+//import video from "./video for tests/1.webm"; // длинный webm
 //import video from "./video for tests/2.webm"; // webm широкий
-//import video from "./video for tests/3.mp4"; // видео 36 секунд
+import video from "./video for tests/3.mp4"; // видео 36 секунд
 //import video from "./video for tests/4.mp4"; // видео 4к
 
 export default {
@@ -133,7 +133,9 @@ export default {
 
     //-------------------- Скрывает управление через некоторое время --------------------//
     userIsNotActive(e) {
-      if (this.video.active == false) this.video.active = true; // здесь появляется панель управления при движении мыши
+      if (this.video.active == false) {
+        this.video.active = true;
+      } // здесь появляется панель управления при движении мыши
       // ниже я хочу сравнить координаты мыши. Если они равны в течении 3х секунд, что панель управления нужно скрыть.
       let X = e.clientX;
       let Y = e.clientY;
@@ -141,16 +143,17 @@ export default {
         this.x = e.clientX;
         this.y = e.clientY;
       }
-      // эта функция в целом работает, но не так, как хотелось бы... её нужно переписать. 
+      this.$refs.widthParent.style.cursor = "default";
+      // эта функция в целом работает, но не так, как хотелось бы... её нужно переписать.
       // условие ниже будет срабатывать всегда, т.к. сравниваются значения из первого ивента,
       // а мне нужно следить за переменными, то есть нужно следить за их содержимым: если содержимое не меняется в течении
       // некотрого времени, то this.video.active = false (убираю панель управления). В общем, опять переписывать...
       this.video.timer = setTimeout(() => {
         if (this.x == X && this.y == Y) {
-          
           this.video.active = false;
           this.x = null;
           this.y = null;
+          this.$refs.widthParent.style.cursor = "none";
         }
         this.video.timer = null;
       }, 3000);
