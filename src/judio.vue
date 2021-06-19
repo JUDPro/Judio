@@ -40,6 +40,7 @@
         <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
       </div>
       <div class="btn-panel">
+        <div class="panel"></div>
         <div class="settings">
           <div class="fullscreen">
             <span class="material-icons" @click="fullSizeWindow"
@@ -373,7 +374,7 @@ export default {
 }
 .pull {
   position: absolute;
-  background: aquamarine;
+  background: rgb(255, 255, 255);
   right: 0;
   height: 100%;
   width: 0.3em;
@@ -401,6 +402,10 @@ export default {
   color: rgb(255, 255, 255);
 }
 .settings {
+  height: 50%;
+  position: relative;
+}
+.panel {
   height: 50%;
   position: relative;
 }
