@@ -40,12 +40,16 @@
         <!-------------------- где будет опущена клавиша мыши, от туда и будет проигрываться видос -------------------->
       </div>
       <div class="btn-panel">
-        <div class="dial">
-          {{ video.currentMinutes }}:{{ video.currentSecond }}/
-          {{ video.minutes }}:{{ video.seconds }}
-        </div>
         <div class="settings">
-          <div class="t" @click="fullSizeWindow"></div>
+          <div class="fullscreen">
+            <span class="material-icons" @click="fullSizeWindow"
+              >fullscreen</span
+            >
+          </div>
+          <div class="dial">
+            {{ video.currentMinutes }}:{{ video.currentSecond }}/
+            {{ video.minutes }}:{{ video.seconds }}
+          </div>
         </div>
       </div>
     </div>
@@ -128,6 +132,7 @@ export default {
       this.video.statePause = this.video.paused;
       this.video.videoElement.pause();
       clearInterval(this.videoPlay);
+      this.video.active = true;
     },
     //-------------------- Методы для проигрывания и паузы --------------------//
 
@@ -248,12 +253,7 @@ export default {
   width: 600px;
   height: 350px;
 }
-.t {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  background: blue;
-}
+
 @media screen and (max-width: 420px) {
   .control-panel {
     width: 100%;
@@ -280,7 +280,7 @@ export default {
 }
 .material-icons {
   position: relative;
-  color: #4c92e7;
+  color: #ffffff;
   cursor: pointer;
 }
 #judio {
@@ -311,7 +311,7 @@ export default {
 .judio::after {
   bottom: 0;
   height: 15%;
-  background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
+  background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
 }
 .judio::after,
 .judio::before {
@@ -386,10 +386,22 @@ export default {
   flex-direction: column;
 }
 .dial {
-  color: aquamarine;
+  position: absolute;
+  color: rgb(255, 255, 255);
   height: 50%;
+  padding: 0.5em 0 0 0;
+}
+.fullscreen {
+  right: 0;
+  bottom: 0.5em;
+  position: absolute;
+}
+.fullscreen > .material-icons {
+  font-size: 2em;
+  color: rgb(255, 255, 255);
 }
 .settings {
   height: 50%;
+  position: relative;
 }
 </style>
